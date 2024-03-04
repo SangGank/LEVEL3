@@ -199,10 +199,11 @@ pyrightconfig.json
 /wandb
 *.npy
 *.bin
-*.pkl
 /outputs
 /output
 /models
 /model_sweep
-/sweeps
+/my_awesome_model
+*.txt
+
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python
