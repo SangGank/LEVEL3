@@ -40,15 +40,28 @@ class CustomTrainer(Trainer):
         """
         model.train()
         inputs = self._prepare_inputs(inputs)
-        loss_out = torch.tensor()
-        for idx in range(3):
-            with self.compute_loss_context_manager():
-                loss = self.compute_loss(model, inputs, idx = idx)
+        li=[]
+        with self.compute_loss_context_manager():
+            loss1 = self.compute_loss(model, inputs, idx = 0)
 
-            if self.args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
-            loss_out += loss
-            self.accelerator.backward(loss)
-        
+        if self.args.n_gpu > 1:
+            loss1 = loss1.mean()  # mean() to average on multi-gpu parallel training
 
-        return loss_out.detach() / self.args.gradient_accumulation_steps
+        self.accelerator.backward(loss1)
+
+        with self.compute_loss_context_manager():
+            loss2 = self.compute_loss(model, inputs, idx = 1)
+
+        if self.args.n_gpu > 1:
+            loss2 = loss2.mean()  # mean() to average on multi-gpu parallel training
+        self.accelerator.backward(loss2)
+
+        with self.compute_loss_context_manager():
+            loss3 = self.compute_loss(model, inputs, idx = 2)
+
+        if self.args.n_gpu > 1:
+            loss3 = loss3.mean()  # mean() to average on multi-gpu parallel training
+        self.accelerator.backward(loss3)
+        loss = loss1.detach() + loss2.detach() + loss3.detach()
+
+        return loss / self.args.gradient_accumulation_steps
