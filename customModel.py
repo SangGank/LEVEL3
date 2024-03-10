@@ -375,7 +375,7 @@ class customElectraForSequenceClassification(BertPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        outputs = self.bert(
+        outputs = self.electra(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
@@ -490,7 +490,7 @@ class customElectraForSequenceClassification(BertPreTrainedModel):
             attentions=outputs.attentions,
         )
     
-
+# 아직 안됨 
 class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
@@ -502,6 +502,10 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
         self.classifier1 = nn.Linear(config.hidden_size, self.num_labels1)
         self.classifier2 = nn.Linear(config.hidden_size, self.num_labels2)
         self.classifier3 = nn.Linear(config.hidden_size, self.num_labels3)
+        
+        # Model parallel
+        self.model_parallel = False
+        self.device_map = None
 
 
         # Initialize weights and apply final processing
@@ -516,9 +520,9 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
         position_ids: Optional[torch.LongTensor] = None,
         head_mask: Optional[torch.FloatTensor] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels1: Optional[torch.LongTensor] = None,
-        labels2: Optional[torch.LongTensor] = None,
-        labels3: Optional[torch.LongTensor] = None,
+        labels1: Optional[torch.Tensor] = None,
+        labels2: Optional[torch.Tensor] = None,
+        labels3: Optional[torch.Tensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
@@ -556,7 +560,7 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
             batch_size, sequence_length = input_ids.shape[:2]
         else:
             batch_size, sequence_length = inputs_embeds.shape[:2]
-
+            
         assert (
             self.config.pad_token_id is not None or batch_size == 1
         ), "Cannot handle batch sizes > 1 if no padding token is defined."
@@ -567,7 +571,7 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
                 # if no pad token found, use modulo instead of reverse indexing for ONNX compatibility
                 sequence_lengths = torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1
                 sequence_lengths = sequence_lengths % input_ids.shape[-1]
-                sequence_lengths = sequence_lengths.to(logits.device)
+                sequence_lengths = sequence_lengths.to(logits1.device)
             else:
                 sequence_lengths = -1
                 # logger.warning(
@@ -575,14 +579,43 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
                 #     "unexpected if using padding tokens in conjunction with `inputs_embeds.`"
                 # )
 
-        pooled_logits = logits1[torch.arange(batch_size, device=logits1.device), sequence_lengths]
-        pooled_logits = logits2[torch.arange(batch_size, device=logits2.device), sequence_lengths]
-        pooled_logits = logits3[torch.arange(batch_size, device=logits3.device), sequence_lengths]
+        pooled_logits1 = logits1[torch.arange(batch_size, device=logits1.device), sequence_lengths]
+        if self.config.pad_token_id is None:
+            sequence_lengths = -1
+        else:
+            if input_ids is not None:
+                # if no pad token found, use modulo instead of reverse indexing for ONNX compatibility
+                sequence_lengths = torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1
+                sequence_lengths = sequence_lengths % input_ids.shape[-1]
+                sequence_lengths = sequence_lengths.to(logits2.device)
+            else:
+                sequence_lengths = -1
+                # logger.warning(
+                #     f"{self.__class__.__name__} will not detect padding tokens in `inputs_embeds`. Results may be "
+                #     "unexpected if using padding tokens in conjunction with `inputs_embeds.`"
+                # )
+        pooled_logits2 = logits2[torch.arange(batch_size, device=logits2.device), sequence_lengths]
+        if self.config.pad_token_id is None:
+            sequence_lengths = -1
+        else:
+            if input_ids is not None:
+                # if no pad token found, use modulo instead of reverse indexing for ONNX compatibility
+                sequence_lengths = torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1
+                sequence_lengths = sequence_lengths % input_ids.shape[-1]
+                sequence_lengths = sequence_lengths.to(logits3.device)
+            else:
+                sequence_lengths = -1
+                # logger.warning(
+                #     f"{self.__class__.__name__} will not detect padding tokens in `inputs_embeds`. Results may be "
+                #     "unexpected if using padding tokens in conjunction with `inputs_embeds.`"
+                # )
+        pooled_logits3 = logits3[torch.arange(batch_size, device=logits3.device), sequence_lengths]
 
         
         loss1 = None
         loss2 = None
         loss3 = None
+        
         if labels1 is not None:
             if self.config.problem_type is None:
                 if self.num_labels1 == 1:
@@ -604,6 +637,7 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
             elif self.config.problem_type == "multi_label_classification":
                 loss_fct = BCEWithLogitsLoss()
                 loss1 = loss_fct(logits1, labels1)
+
 
         if labels2 is not None:
             if self.config.problem_type is None:
@@ -653,17 +687,16 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
             loss = loss1 + loss2 + loss3
             
         if not return_dict:
-            output = (pooled_logits,) + transformer_outputs[1:]
+            output = (logits1,) + (logits2,) + (logits3,) + transformer_outputs[1:]
             return ((loss,) + output) if loss is not None else output
 
         return SequenceClassifierOutputWithPast(
             loss=loss,
-            logits=pooled_logits,
+            logits=(pooled_logits1,) + (pooled_logits2,) + (pooled_logits3,),
             past_key_values=transformer_outputs.past_key_values,
             hidden_states=transformer_outputs.hidden_states,
             attentions=transformer_outputs.attentions,
         )
-
 
 
 
