@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from transformers import BertForSequenceClassification, BertModel, BertPreTrainedModel
+from transformers import BertForSequenceClassification, BertModel, BertPreTrainedModel, AutoTokenizer,AutoConfig
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
 from typing import List, Optional, Tuple, Union
@@ -13,7 +13,7 @@ from transformers.file_utils import (
     replace_return_docstrings,
 )
 import torch
-
+import pandas as pd
 
 def get_weighted_loss(loss_fct, inputs, labels, weights):
     loss = 0.0
@@ -242,3 +242,22 @@ class customBertForSequenceClassification(BertPreTrainedModel):
             attentions=outputs.attentions,
         )
 
+if __name__ == '__main__':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    data = pd.read_csv('./genre_seung.csv')
+
+    id2label_emotion = {k:l for k, l in enumerate(data.emotion.unique())}
+    label2id_emotion = {l:k for k, l in enumerate(data.emotion.unique())}
+    id2label_tempo = {k:l for k, l in enumerate(data['tempo(category)'].unique())}
+    label2id_tempo = {l:k for k, l in enumerate(data['tempo(category)'].unique())}
+    id2label_genre = {k:l for k, l in enumerate(data['genre'].unique())}
+    label2id_genre = {l:k for k, l in enumerate(data['genre'].unique())}
+    BASE_MODEL = 'bert-base-uncased'
+
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    config = AutoConfig.from_pretrained(BASE_MODEL)
+    config.num_labels1 = len(id2label_emotion)
+    config.num_labels2 = len(id2label_tempo)
+    config.num_labels3 = len(id2label_genre)
+    model = customBertForSequenceClassification.from_pretrained(BASE_MODEL, config= config).to(device)
