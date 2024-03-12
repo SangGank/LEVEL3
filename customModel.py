@@ -616,72 +616,72 @@ class customGPT2ForSequenceClassification(GPT2PreTrainedModel):
         loss2 = None
         loss3 = None
         
-        if labels1 is not None:
-            if self.config.problem_type is None:
-                if self.num_labels1 == 1:
-                    self.config.problem_type = "regression"
-                elif self.num_labels1 > 1 and (labels1.dtype == torch.long or labels1.dtype == torch.int):
-                    self.config.problem_type = "single_label_classification"
-                else:
-                    self.config.problem_type = "multi_label_classification"
+        # if labels1 is not None:
+        #     if self.config.problem_type is None:
+        #         if self.num_labels1 == 1:
+        #             self.config.problem_type = "regression"
+        #         elif self.num_labels1 > 1 and (labels1.dtype == torch.long or labels1.dtype == torch.int):
+        #             self.config.problem_type = "single_label_classification"
+        #         else:
+        #             self.config.problem_type = "multi_label_classification"
 
-            if self.config.problem_type == "regression":
-                loss_fct = MSELoss()
-                if self.num_labels1 == 1:
-                    loss1 = loss_fct(logits1.squeeze(), labels1.squeeze())
-                else:
-                    loss1 = loss_fct(logits1, labels1)
-            elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss()
-                loss1 = loss_fct(logits1.view(-1, self.num_labels1), labels1.view(-1))
-            elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
-                loss1 = loss_fct(logits1, labels1)
+        #     if self.config.problem_type == "regression":
+        #         loss_fct = MSELoss()
+        #         if self.num_labels1 == 1:
+        #             loss1 = loss_fct(logits1.squeeze(), labels1.squeeze())
+        #         else:
+        #             loss1 = loss_fct(logits1, labels1)
+        #     elif self.config.problem_type == "single_label_classification":
+        #         loss_fct = CrossEntropyLoss()
+        #         loss1 = loss_fct(logits1.view(-1, self.num_labels1), labels1.view(-1))
+        #     elif self.config.problem_type == "multi_label_classification":
+        #         loss_fct = BCEWithLogitsLoss()
+        #         loss1 = loss_fct(logits1, labels1)
 
 
-        if labels2 is not None:
-            if self.config.problem_type is None:
-                if self.num_labels2 == 1:
-                    self.config.problem_type = "regression"
-                elif self.num_labels2 > 1 and (labels2.dtype == torch.long or labels2.dtype == torch.int):
-                    self.config.problem_type = "single_label_classification"
-                else:
-                    self.config.problem_type = "multi_label_classification"
+        # if labels2 is not None:
+        #     if self.config.problem_type is None:
+        #         if self.num_labels2 == 1:
+        #             self.config.problem_type = "regression"
+        #         elif self.num_labels2 > 1 and (labels2.dtype == torch.long or labels2.dtype == torch.int):
+        #             self.config.problem_type = "single_label_classification"
+        #         else:
+        #             self.config.problem_type = "multi_label_classification"
 
-            if self.config.problem_type == "regression":
-                loss_fct = MSELoss()
-                if self.num_labels2 == 1:
-                    loss2 = loss_fct(logits2.squeeze(), labels2.squeeze())
-                else:
-                    loss2 = loss_fct(logits2, labels2)
-            elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss()
-                loss2 = loss_fct(logits2.view(-1, self.num_labels2), labels2.view(-1))
-            elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
-                loss2 = loss_fct(logits2, labels2)
+        #     if self.config.problem_type == "regression":
+        #         loss_fct = MSELoss()
+        #         if self.num_labels2 == 1:
+        #             loss2 = loss_fct(logits2.squeeze(), labels2.squeeze())
+        #         else:
+        #             loss2 = loss_fct(logits2, labels2)
+        #     elif self.config.problem_type == "single_label_classification":
+        #         loss_fct = CrossEntropyLoss()
+        #         loss2 = loss_fct(logits2.view(-1, self.num_labels2), labels2.view(-1))
+        #     elif self.config.problem_type == "multi_label_classification":
+        #         loss_fct = BCEWithLogitsLoss()
+        #         loss2 = loss_fct(logits2, labels2)
         
-        if labels3 is not None:
-            if self.config.problem_type is None:
-                if self.num_labels3 == 1:
-                    self.config.problem_type = "regression"
-                elif self.num_labels3 > 1 and (labels3.dtype == torch.long or labels3.dtype == torch.int):
-                    self.config.problem_type = "single_label_classification"
-                else:
-                    self.config.problem_type = "multi_label_classification"
+        # if labels3 is not None:
+        #     if self.config.problem_type is None:
+        #         if self.num_labels3 == 1:
+        #             self.config.problem_type = "regression"
+        #         elif self.num_labels3 > 1 and (labels3.dtype == torch.long or labels3.dtype == torch.int):
+        #             self.config.problem_type = "single_label_classification"
+        #         else:
+        #             self.config.problem_type = "multi_label_classification"
 
-            if self.config.problem_type == "regression":
-                loss_fct = MSELoss()
-                if self.num_labels3 == 1:
-                    loss3 = loss_fct(logits3.squeeze(), labels3.squeeze())
-                else:
-                    loss3 = loss_fct(logits3, labels3)
-            elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss()
-                loss3 = loss_fct(logits3.view(-1, self.num_labels3), labels3.view(-1))
-            elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
-                loss3 = loss_fct(logits3, labels3)
+        #     if self.config.problem_type == "regression":
+        #         loss_fct = MSELoss()
+        #         if self.num_labels3 == 1:
+        #             loss3 = loss_fct(logits3.squeeze(), labels3.squeeze())
+        #         else:
+        #             loss3 = loss_fct(logits3, labels3)
+        #     elif self.config.problem_type == "single_label_classification":
+        #         loss_fct = CrossEntropyLoss()
+        #         loss3 = loss_fct(logits3.view(-1, self.num_labels3), labels3.view(-1))
+        #     elif self.config.problem_type == "multi_label_classification":
+        #         loss_fct = BCEWithLogitsLoss()
+        #         loss3 = loss_fct(logits3, labels3)
         loss =None
         if loss1 and loss2 and loss3:
             loss = loss1 + loss2 + loss3
