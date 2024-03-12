@@ -13,7 +13,7 @@ import time
 
 data = pd.read_csv('./genre_11_tempo_4.csv')
 data3 = data[['singer','song_name']]
-# data3= data2.iloc[:20]
+# data3= data2.iloc[688:690]
 
 
 
@@ -38,10 +38,19 @@ for idx, value in tqdm(data3.iterrows()):
     url = youtube + search_keyword_encode
     
     driver.get(url)
+    
     element1 = WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#video-title')))
     next = element1.get_attribute("href")
     url_link.append(next)
-    driver.get(next)
+    try:
+        driver.get(next)
+    except:
+        text1_list.append(None)
+        text2_list.append(None)
+        text3_list.append(None)
+        text4_list.append(None)
+        text5_list.append(None)
+        continue
 
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
 

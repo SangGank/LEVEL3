@@ -498,10 +498,22 @@ class CustomTrainer(Trainer):
 
 def data_labels(label_data_path ='./labels.pkl'):
     with open(label_data_path,'rb') as f:
-            emotion_labels=pickle.load(f)
-            tempo_labels=pickle.load(f)
-            genre_labels=pickle.load(f)
+        emotion_labels=pickle.load(f)
+        tempo_labels=pickle.load(f)
+        genre_labels=pickle.load(f)
+    
     return emotion_labels, tempo_labels, genre_labels
+
+
+def id2labelData_labels(label_data_path ='./labels.pkl'):
+    with open(label_data_path,'rb') as f:
+        emotion_labels=pickle.load(f)
+        tempo_labels=pickle.load(f)
+        genre_labels=pickle.load(f)
+    id2label_emotion = {k:l for k, l in enumerate(emotion_labels)}
+    id2label_tempo = {k:l for k, l in enumerate(tempo_labels)}
+    id2label_genre = {k:l for k, l in enumerate(genre_labels)}
+    return id2label_emotion, id2label_tempo, id2label_genre
     
 
 class frontModelDataset:
