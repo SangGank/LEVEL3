@@ -36,13 +36,13 @@ for idx, value in tqdm(data3.iterrows()):
     keyword = value['song_name'] + " " + value['singer']
     search_keyword_encode = requests.utils.quote(keyword)
     url = youtube + search_keyword_encode
-    
-    driver.get(url)
-    
-    element1 = WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#video-title')))
-    next = element1.get_attribute("href")
-    url_link.append(next)
     try:
+        driver.get(url)
+        
+        element1 = WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#video-title')))
+        next = element1.get_attribute("href")
+        url_link.append(next)
+    
         driver.get(next)
     except:
         text1_list.append(None)

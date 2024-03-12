@@ -206,5 +206,6 @@ pyrightconfig.json
 /my_awesome_model
 *.sh
 *.deb
+/best_model
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python
