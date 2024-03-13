@@ -21,23 +21,54 @@ class CustomTrainer(Trainer):
     
 
     def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
-        """
-        Perform a training step on a batch of inputs.
+       
+        model.train()
+        inputs = self._prepare_inputs(inputs)
+        li=[]
+        with self.compute_loss_context_manager():
+            loss1 = self.compute_loss(model, inputs, idx = 0)
 
-        Subclass and override to inject custom behavior.
+        if self.args.n_gpu > 1:
+            loss1 = loss1.mean()  # mean() to average on multi-gpu parallel training
 
-        Args:
-            model (`nn.Module`):
-                The model to train.
-            inputs (`Dict[str, Union[torch.Tensor, Any]]`):
-                The inputs and targets of the model.
+        self.accelerator.backward(loss1)
 
-                The dictionary will be unpacked before being fed to the model. Most models expect the targets under the
-                argument `labels`. Check your model's documentation for all accepted arguments.
+        with self.compute_loss_context_manager():
+            loss2 = self.compute_loss(model, inputs, idx = 1)
 
-        Return:
-            `torch.Tensor`: The tensor with training loss on this batch.
-        """
+        if self.args.n_gpu > 1:
+            loss2 = loss2.mean()  # mean() to average on multi-gpu parallel training
+        self.accelerator.backward(loss2)
+
+        with self.compute_loss_context_manager():
+            loss3 = self.compute_loss(model, inputs, idx = 2)
+
+        if self.args.n_gpu > 1:
+            loss3 = loss3.mean()  # mean() to average on multi-gpu parallel training
+        self.accelerator.backward(loss3)
+        loss = loss1.detach() + loss2.detach() + loss3.detach()
+
+        return loss / self.args.gradient_accumulation_steps
+    
+class CustomTrainer_cross_entropy(Trainer):
+    def __init__(self, group_weights=None, **kwargs):
+        super().__init__(**kwargs)
+        self.group_weights = group_weights
+        
+    def compute_loss(self, model, inputs, return_outputs=False , idx = 0):
+        labels = inputs.pop(f"labels{idx+1}")
+        outputs = model(**inputs)
+        logits = outputs[0][idx]
+        # logits = nn.Softmax(logits)
+        # global_score_loss = torch.nn.functional.cross_entropy(logits, labels)
+        cause_loss = torch.nn.functional.cross_entropy(logits, labels)
+        
+        # loss = self.group_weights[0] * global_score_loss +self.group_weights[1] * cause_loss
+        return (cause_loss, outputs) if return_outputs else cause_loss
+    
+
+    def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+       
         model.train()
         inputs = self._prepare_inputs(inputs)
         li=[]
