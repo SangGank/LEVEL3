@@ -39,7 +39,7 @@ def generate_text(prompt, max_length=2048):
 
 def make_moode(mood, tempo, genre):
     base_prompt = "<s>[INST]\n<<SYS>>\n{system_prompt}\n<</SYS>>\n\n{user_prompt}[/INST]"
-    text = f"Make 50 sentence. the genre of the song is 'f{genre}', the tempo of the song is 'f{tempo}', the mood of the song is 'f{mood}'. As for the form of the result, put 50 sentences in the list"
+    text = f"Make 50 sentence. the genre of the song is '{genre}', the tempo of the song is '{tempo}', the mood of the song is '{mood}'. As for the form of the result, put 50 sentences in the list"
     system_text = "Please print out 50 sentences that make the genre of the song I designated, the tempo of the song, and the mood of the song."
     input = base_prompt.format(system_prompt = system_text,
                                user_prompt = text)
@@ -56,9 +56,9 @@ with open(label_data_path,'rb') as f:
 
 lis = []
 columns = ['genre','emotion','tempo(category)','texts']
-for genre in tqdm(genre_labels[:2]):
-    for emotion in emotion_labels[:2]:
-        for tempo in tempo_labels[:2]:
+for genre in tqdm(genre_labels):
+    for emotion in tqdm(emotion_labels):
+        for tempo in tempo_labels:
             result = make_moode(emotion, tempo, genre)
             lis.append([genre,emotion,tempo, result])
 data = pd.DataFrame(lis,columns = columns)
