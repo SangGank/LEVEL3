@@ -45,6 +45,7 @@ for idx, value in tqdm(data3.iterrows()):
     
         driver.get(next)
     except:
+        url_link.append(None)
         text1_list.append(None)
         text2_list.append(None)
         text3_list.append(None)
