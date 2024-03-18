@@ -545,6 +545,7 @@ class frontModelDataset:
             self.labels1.append(label1)
             self.labels2.append(label2)
             self.labels3.append(label3)
+        
         self.dataset =  tokenizer(datas,padding=True, truncation=True,max_length=512 ,return_tensors="pt").to('cuda')
         self.labels1= torch.tensor(self.labels1)
         self.labels2= torch.tensor(self.labels2)
