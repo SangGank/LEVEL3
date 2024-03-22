@@ -23,6 +23,7 @@ from torch import nn
 from transformers.utils import is_sagemaker_mp_enabled, is_apex_available
 import pickle
 
+
 def get_weighted_loss(loss_fct, inputs, labels, weights):
     loss = 0.0
     for i in range(weights.shape[0]):
@@ -547,6 +548,108 @@ class frontModelDataset:
             self.labels3.append(label3)
         
         self.dataset =  tokenizer(datas,padding=True, truncation=True,max_length=512 ,return_tensors="pt").to('cuda')
+        self.labels1= torch.tensor(self.labels1)
+        self.labels2= torch.tensor(self.labels2)
+        self.labels3= torch.tensor(self.labels3)
+
+    def __len__(self):
+        return len(self.labels1)
+    
+    def __getitem__(self, idx):
+        item = {key: val[idx].clone().detach() for key, val in self.dataset.items()}
+        item['labels1'] = self.labels1[idx].clone().detach()
+        item['labels2'] = self.labels2[idx].clone().detach()
+        item['labels3'] = self.labels3[idx].clone().detach()
+        return item
+    
+class frontModelDataset_not_stopword:
+    def __init__(self, data, tokenizer, label_data_path ='./labels.pkl'):
+
+        emotion_labels, tempo_labels, genre_labels= data_labels(label_data_path)
+        
+        id2label_emotion = {k:l for k, l in enumerate(emotion_labels)}
+        label2id_emotion = {l:k for k, l in enumerate(emotion_labels)}
+        id2label_tempo = {k:l for k, l in enumerate(tempo_labels)}
+        label2id_tempo = {l:k for k, l in enumerate(tempo_labels)}
+        id2label_genre = {k:l for k, l in enumerate(genre_labels)}
+        label2id_genre = {l:k for k, l in enumerate(genre_labels)}
+
+        self.tokenizer = tokenizer
+        self.dataset = []
+        datas = []
+        self.labels1 = []
+        self.labels2 = []
+        self.labels3 = []
+        for idx, df in tqdm(data.iterrows()):
+            label1 = [0. for _ in range(len(id2label_emotion))]
+            label2 = [0. for _ in range(len(id2label_tempo))]
+            label3 = [0. for _ in range(len(id2label_genre))]
+            
+            datas.append(remove_stop_word(df.caption))
+            label1[label2id_emotion[df.emotion]] = 1.
+            label2[label2id_tempo[df['tempo(category)']]] = 1.
+            label3[label2id_genre[df['genre']]] = 1.
+            self.labels1.append(label1)
+            self.labels2.append(label2)
+            self.labels3.append(label3)
+        
+        self.dataset =  tokenizer(datas,padding=True, truncation=True,max_length=512 ,return_tensors="pt").to('cuda')
+        self.labels1= torch.tensor(self.labels1)
+        self.labels2= torch.tensor(self.labels2)
+        self.labels3= torch.tensor(self.labels3)
+
+    def __len__(self):
+        return len(self.labels1)
+    
+    def __getitem__(self, idx):
+        item = {key: val[idx].clone().detach() for key, val in self.dataset.items()}
+        item['labels1'] = self.labels1[idx].clone().detach()
+        item['labels2'] = self.labels2[idx].clone().detach()
+        item['labels3'] = self.labels3[idx].clone().detach()
+        return item
+    
+def remove_stop_word(string):
+    stop_words_list = ['and','a','the','The','of','with','in','for']
+    string = string.split()
+    result = []
+    for word in string: 
+        if word not in stop_words_list: 
+            result.append(word) 
+    result = ' '.join(result)
+    return result 
+
+class frontModelDataset_front_sentence:
+    def __init__(self, data, tokenizer, label_data_path ='./labels.pkl'):
+
+        emotion_labels, tempo_labels, genre_labels= data_labels(label_data_path)
+        
+        id2label_emotion = {k:l for k, l in enumerate(emotion_labels)}
+        label2id_emotion = {l:k for k, l in enumerate(emotion_labels)}
+        id2label_tempo = {k:l for k, l in enumerate(tempo_labels)}
+        label2id_tempo = {l:k for k, l in enumerate(tempo_labels)}
+        id2label_genre = {k:l for k, l in enumerate(genre_labels)}
+        label2id_genre = {l:k for k, l in enumerate(genre_labels)}
+
+        self.tokenizer = tokenizer
+        self.dataset = []
+        datas = []
+        self.labels1 = []
+        self.labels2 = []
+        self.labels3 = []
+        sentences = ['Find the mood, genre, and tempo of the music']*len(data)
+        for idx, df in tqdm(data.iterrows()):
+            label1 = [0. for _ in range(len(id2label_emotion))]
+            label2 = [0. for _ in range(len(id2label_tempo))]
+            label3 = [0. for _ in range(len(id2label_genre))]
+            datas.append(df.caption)
+            label1[label2id_emotion[df.emotion]] = 1.
+            label2[label2id_tempo[df['tempo(category)']]] = 1.
+            label3[label2id_genre[df['genre']]] = 1.
+            self.labels1.append(label1)
+            self.labels2.append(label2)
+            self.labels3.append(label3)
+        
+        self.dataset =  tokenizer(sentences, datas,padding=True, truncation=True,max_length=512 ,return_tensors="pt").to('cuda')
         self.labels1= torch.tensor(self.labels1)
         self.labels2= torch.tensor(self.labels2)
         self.labels3= torch.tensor(self.labels3)
