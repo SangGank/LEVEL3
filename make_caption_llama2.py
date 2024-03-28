@@ -53,6 +53,8 @@ with open(label_data_path,'rb') as f:
     tempo_labels=pickle.load(f)
     genre_labels=pickle.load(f)
 
+genre_labels = ['Trot','Ballade']
+
 
 lis = []
 columns = ['genre','emotion','tempo(category)','texts']
@@ -62,4 +64,4 @@ for genre in tqdm(genre_labels):
             result = make_moode(emotion, tempo, genre)
             lis.append([genre,emotion,tempo, result])
 data = pd.DataFrame(lis,columns = columns)
-data.to_csv('./make_caption.csv',index=False)
+data.to_csv('./make_caption_trot_ballad.csv',index=False)

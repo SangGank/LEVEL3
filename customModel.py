@@ -171,7 +171,7 @@ class customBertForSequenceClassification(BertPreTrainedModel):
     
 
 
-class customRobertaForSequenceClassification(BertPreTrainedModel):
+class customRobertaForSequenceClassification(RobertaPreTrainedModel):
     def __init__(self, config, num_labels1 = None, num_labels2 = None, num_labels3 = None ):
         super().__init__(config)
         self.num_labels1 = config.num_labels1
